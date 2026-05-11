@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AI Bingo</title>
+    <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="88">🟡</text></svg>'>
+    <link rel="stylesheet" href="./styles.css?v=7">
+  </head>
+  <body>
+    <main class="app">
+      <header class="hero">
+        <div>
+          <div class="title-row">
+            <span class="pac-mark" aria-hidden="true"></span>
+            <h1>AI Bingo</h1>
+          </div>
+          <p>Try out each of the bingo cards to level up</p>
+        </div>
+      </header>
+
+      <section class="game-card" aria-label="AI Bingo board">
+        <div class="game-top">
+          <div class="progress-copy" aria-live="polite">
+            <strong id="completedValue">0</strong>
+            <span>of 24 done</span>
+            <span class="dot">·</span>
+            <strong id="bingoValue">0</strong>
+            <span>bingo</span>
+          </div>
+          <button class="text-button" id="resetGame" type="button">start over</button>
+        </div>
+
+        <div class="progress-track" aria-hidden="true">
+          <span id="progressFill"></span>
+        </div>
+
+        <div class="board-wrap">
+          <section class="bingo-board" id="bingoBoard" aria-label="AI Bingo actions"></section>
+        </div>
+
+        <div class="modal" id="detailModal" hidden>
+          <aside class="detail-panel" id="detailPanel" aria-live="polite">
+            <button class="close-button" id="closeDetail" type="button" aria-label="Close">×</button>
+            <div class="detail-kicker">
+              <span id="missionTrack">AI Everyday</span>
+              <span>Tile <strong id="roundValue">1</strong>/<span id="roundTotal">24</span></span>
+            </div>
+            <h2 id="missionTitle">Draft an email</h2>
+            <p id="missionBrief">Turn rough notes into a clear email without losing the point.</p>
+            <div class="choice-grid" id="choiceGrid"></div>
+            <div class="resource-links" id="resourceLinks"></div>
+            <div class="prompt-box">
+              <div class="prompt-top">
+                <strong>Copy/paste prompt</strong>
+                <button class="copy-button" id="copyPrompt" type="button">copy</button>
+              </div>
+              <pre id="promptText"></pre>
+            </div>
+            <div class="actions">
+              <button class="primary" id="submitAnswer" type="button">mark done</button>
+              <button class="secondary" id="nextRound" type="button" hidden>next tile</button>
+            </div>
+            <div class="feedback" id="feedbackBox" hidden></div>
+          </aside>
+        </div>
+
+        <div class="celebration" id="celebration" hidden aria-live="assertive" aria-atomic="true" role="status">
+          <div class="celebration-burst" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <div class="screen-firework firework-one" aria-hidden="true">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </div>
+          <div class="screen-firework firework-two" aria-hidden="true">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </div>
+          <div class="screen-firework firework-three" aria-hidden="true">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </div>
+          <div class="screen-firework firework-four" aria-hidden="true">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </div>
+          <div class="celebration-card">
+            <span class="celebration-unicorn" aria-hidden="true">🦄</span>
+            <strong>Bingo!</strong>
+          </div>
+        </div>
+
+        <footer class="level-strip" aria-label="Level progress">
+          <div class="level-meter level-everyday">
+            <div class="level-copy">
+              <span>Level 1</span>
+              <strong>AI Everyday</strong>
+              <small><span id="everydayDone">0</span>/12</small>
+            </div>
+            <div class="level-rail" aria-hidden="true">
+              <span id="everydayFill"></span>
+            </div>
+          </div>
+          <div class="level-meter level-builder">
+            <div class="level-copy">
+              <span>Level 2</span>
+              <strong>⚡ AI Builder</strong>
+              <small><span id="builderDone">0</span>/12</small>
+            </div>
+            <div class="level-rail" aria-hidden="true">
+              <span id="builderFill"></span>
+            </div>
+          </div>
+        </footer>
+      </section>
+    </main>
+
+    <script src="./script.js?v=7"></script>
+  </body>
+</html>
