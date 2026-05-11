@@ -5,7 +5,861 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>AI Bingo</title>
     <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="88">🟡</text></svg>'>
-    <link rel="stylesheet" href="./styles.css?v=7">
+    <style>
+:root {
+  --bg: #242421;
+  --card: #1c1c1a;
+  --tile: #1b1b19;
+  --tile-soft: #252521;
+  --line: #363632;
+  --text: #ecece6;
+  --muted: #87877f;
+  --accent: #2fbf8f;
+  --accent-2: #ffd23f;
+  --builder: #f7bd32;
+  --danger: #dc5a50;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+button {
+  font: inherit;
+}
+
+.app {
+  width: min(1160px, 100%);
+  margin: 0 auto;
+  padding: 32px 16px 48px;
+}
+
+.hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 30px;
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pac-mark,
+.tile-pac {
+  display: inline-block;
+  border-radius: 50%;
+  background: conic-gradient(from 35deg, transparent 0 70deg, var(--accent-2) 70deg 360deg);
+}
+
+.pac-mark {
+  width: 36px;
+  height: 36px;
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.22);
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: 1.55rem;
+  line-height: 1.1;
+  letter-spacing: 0;
+}
+
+.hero p {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 0.98rem;
+}
+
+.game-card {
+  background: var(--card);
+  border: 1px solid #30302d;
+  border-radius: 10px;
+  padding: 26px 24px 24px;
+}
+
+.game-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.progress-copy {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.progress-copy strong {
+  color: var(--text);
+}
+
+.dot {
+  color: var(--text);
+}
+
+.text-button {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 6px 0;
+}
+
+.text-button:hover {
+  color: var(--text);
+}
+
+.progress-track {
+  height: 4px;
+  border-radius: 999px;
+  background: #343430;
+  overflow: hidden;
+  margin-bottom: 22px;
+}
+
+.progress-track span {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 220ms ease;
+}
+
+.board-wrap {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.bingo-board {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.tile {
+  position: relative;
+  aspect-ratio: 1;
+  min-height: 94px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--tile);
+  color: #c9c9c1;
+  cursor: pointer;
+  padding: 12px;
+  text-align: center;
+  display: grid;
+  place-items: center;
+  line-height: 1.18;
+  overflow: hidden;
+}
+
+.tile:hover {
+  border-color: #55554e;
+  background: #20201d;
+}
+
+.tile span {
+  max-width: 96%;
+  font-size: 0.86rem;
+}
+
+.tile small {
+  position: absolute;
+  bottom: 12px;
+  left: 0;
+  right: 0;
+  color: var(--builder);
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.tile.active {
+  border-color: var(--accent-2);
+  background: #2a281c;
+  color: #fff7ce;
+}
+
+.tile.complete {
+  border-color: rgba(47, 191, 143, 0.68);
+  background: #17271f;
+  color: #dcfff2;
+}
+
+.tile.free {
+  cursor: default;
+  background: var(--tile-soft);
+  color: #6d6d66;
+  font-weight: 700;
+}
+
+.tile.free small {
+  color: #5e5e58;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+}
+
+.tile b {
+  position: absolute;
+  top: 8px;
+  right: 9px;
+  color: var(--accent);
+  font-size: 1rem;
+}
+
+.tile-pac {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  top: 8px;
+  left: 8px;
+}
+
+.detail-panel {
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #181816;
+  padding: 18px;
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.58);
+}
+
+.modal[hidden] {
+  display: none;
+}
+
+.close-button {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.close-button:hover {
+  color: var(--text);
+}
+
+.detail-kicker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-right: 38px;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.detail-panel h2 {
+  margin-top: 13px;
+  font-size: 1.45rem;
+  line-height: 1.12;
+  letter-spacing: 0;
+}
+
+.detail-panel p {
+  margin-top: 9px;
+  color: #b7b7ae;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.choice-grid {
+  display: grid;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.tip-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #1d1d1a;
+  color: #d8d8cf;
+  padding: 12px;
+  display: grid;
+  gap: 5px;
+}
+
+.tip-card strong {
+  color: var(--accent-2);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tip-card span {
+  font-size: 0.86rem;
+  line-height: 1.35;
+}
+
+.resource-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.resource-links[hidden] {
+  display: none;
+}
+
+.resource-links a {
+  border: 1px solid rgba(47, 191, 143, 0.58);
+  border-radius: 999px;
+  color: #cfeee1;
+  background: rgba(47, 191, 143, 0.08);
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 12px;
+  text-decoration: none;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.resource-links a:hover {
+  border-color: var(--accent);
+  background: rgba(47, 191, 143, 0.16);
+  color: var(--text);
+}
+
+.prompt-box {
+  margin-top: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #121210;
+  overflow: hidden;
+}
+
+.prompt-top {
+  min-height: 40px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 10px 0 12px;
+}
+
+.prompt-top strong {
+  color: var(--accent-2);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.copy-button {
+  border: 1px solid #45453f;
+  border-radius: 7px;
+  background: transparent;
+  color: #c9c9c1;
+  cursor: pointer;
+  min-height: 28px;
+  padding: 0 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.copy-button:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.prompt-box pre {
+  margin: 0;
+  max-height: 150px;
+  overflow: auto;
+  white-space: pre-wrap;
+  color: #deded4;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  padding: 12px;
+}
+
+.actions {
+  display: flex;
+  gap: 9px;
+  margin-top: 16px;
+}
+
+.primary,
+.secondary {
+  min-height: 40px;
+  border-radius: 8px;
+  padding: 0 13px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.primary {
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #07150f;
+}
+
+.primary:disabled {
+  border-color: #363632;
+  background: #272723;
+  color: #77776f;
+  cursor: default;
+}
+
+.secondary {
+  border: 1px solid #45453f;
+  background: transparent;
+  color: #c9c9c1;
+}
+
+.feedback {
+  margin-top: 14px;
+  border: 1px solid rgba(47, 191, 143, 0.45);
+  border-radius: 8px;
+  color: #cfeee1;
+  background: rgba(47, 191, 143, 0.08);
+  padding: 11px 12px;
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.feedback strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--accent);
+}
+
+.level-strip {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  width: min(720px, 100%);
+  margin: 18px auto 0;
+  padding-top: 2px;
+}
+
+.level-meter {
+  display: grid;
+  gap: 8px;
+}
+
+.level-copy {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.level-copy span,
+.level-copy small {
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1;
+}
+
+.level-copy span {
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.level-copy strong {
+  color: #d8d8cf;
+  font-size: 0.88rem;
+  line-height: 1.1;
+}
+
+.level-rail {
+  height: 5px;
+  border-radius: 999px;
+  background: #343430;
+  overflow: hidden;
+}
+
+.level-rail span {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  transition: width 220ms ease;
+}
+
+.level-everyday .level-rail span {
+  background: var(--accent);
+}
+
+.level-builder .level-rail span {
+  background: var(--accent-2);
+}
+
+.celebration {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  overflow: hidden;
+  background: radial-gradient(circle at center, rgba(255, 210, 63, 0.11), transparent 45%);
+}
+
+.celebration[hidden] {
+  display: none;
+}
+
+.celebration-card {
+  position: relative;
+  z-index: 3;
+  min-width: min(220px, calc(100vw - 48px));
+  border: 1px solid rgba(255, 210, 63, 0.56);
+  border-radius: 10px;
+  background: rgba(24, 24, 22, 0.94);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.46);
+  padding: 22px 24px 23px;
+  text-align: center;
+  transform: translateY(10px) scale(0.94);
+  opacity: 0;
+}
+
+.celebration.show .celebration-card {
+  animation: celebration-pop 2100ms ease both;
+}
+
+.celebration-unicorn {
+  display: block;
+  font-size: clamp(3.2rem, 10vw, 5.6rem);
+  line-height: 1;
+  margin-bottom: 8px;
+  transform-origin: 50% 100%;
+}
+
+.celebration.show .celebration-unicorn {
+  animation: unicorn-dance 420ms ease-in-out infinite alternate;
+}
+
+.celebration-card strong {
+  display: block;
+  color: var(--accent-2);
+  font-size: 1.45rem;
+  line-height: 1;
+}
+
+.celebration-burst {
+  position: absolute;
+  inset: 0;
+}
+
+.celebration-burst span {
+  --x: 0px;
+  --y: 0px;
+  --c: var(--accent-2);
+  position: absolute;
+  top: 48%;
+  left: 50%;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--c);
+  box-shadow: 0 0 18px var(--c);
+  opacity: 0;
+}
+
+.celebration.show .celebration-burst span {
+  animation: firework 1120ms ease-out both;
+}
+
+.celebration-burst span:nth-child(1) { --x: -260px; --y: -170px; --c: #ffd23f; animation-delay: 20ms; }
+.celebration-burst span:nth-child(2) { --x: -180px; --y: 150px; --c: #2fbf8f; animation-delay: 80ms; }
+.celebration-burst span:nth-child(3) { --x: -80px; --y: -230px; --c: #f5a94b; animation-delay: 130ms; }
+.celebration-burst span:nth-child(4) { --x: 95px; --y: -210px; --c: #58d6ff; animation-delay: 60ms; }
+.celebration-burst span:nth-child(5) { --x: 225px; --y: -120px; --c: #ffd23f; animation-delay: 160ms; }
+.celebration-burst span:nth-child(6) { --x: 260px; --y: 92px; --c: #2fbf8f; animation-delay: 100ms; }
+.celebration-burst span:nth-child(7) { --x: 120px; --y: 205px; --c: #f178b6; animation-delay: 180ms; }
+.celebration-burst span:nth-child(8) { --x: -70px; --y: 235px; --c: #ffd23f; animation-delay: 30ms; }
+.celebration-burst span:nth-child(9) { --x: -330px; --y: 20px; --c: #58d6ff; animation-delay: 220ms; }
+.celebration-burst span:nth-child(10) { --x: 330px; --y: -10px; --c: #f5a94b; animation-delay: 200ms; }
+.celebration-burst span:nth-child(11) { --x: -220px; --y: -40px; --c: #f178b6; animation-delay: 260ms; }
+.celebration-burst span:nth-child(12) { --x: 205px; --y: 165px; --c: #ffd23f; animation-delay: 250ms; }
+
+.screen-firework {
+  --delay: 0ms;
+  --spark: #ffd23f;
+  --spark-2: #2fbf8f;
+  position: absolute;
+  z-index: 2;
+  width: 210px;
+  height: 210px;
+  opacity: 1;
+}
+
+.firework-one {
+  top: 23%;
+  left: 24%;
+}
+
+.firework-two {
+  top: 22%;
+  right: 22%;
+  --delay: 180ms;
+  --spark: #58d6ff;
+  --spark-2: #ffd23f;
+}
+
+.firework-three {
+  left: 25%;
+  bottom: 18%;
+  --delay: 360ms;
+  --spark: #f178b6;
+  --spark-2: #2fbf8f;
+}
+
+.firework-four {
+  right: 24%;
+  bottom: 18%;
+  --delay: 540ms;
+  --spark: #ffd23f;
+  --spark-2: #f5a94b;
+}
+
+.screen-firework::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--spark);
+  box-shadow: 0 0 28px 8px var(--spark);
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.25);
+}
+
+.screen-firework i {
+  --x: 0px;
+  --y: -90px;
+  --angle: 0deg;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 48px;
+  border-radius: 999px;
+  background: linear-gradient(var(--spark), var(--spark-2));
+  box-shadow: 0 0 14px var(--spark);
+  filter: drop-shadow(0 0 10px var(--spark));
+  opacity: 0;
+  transform: translate(-50%, -50%) rotate(var(--angle)) scaleY(0.28);
+}
+
+.screen-firework i:nth-child(1) { --x: 0px; --y: -96px; --angle: 0deg; }
+.screen-firework i:nth-child(2) { --x: 68px; --y: -68px; --angle: 45deg; }
+.screen-firework i:nth-child(3) { --x: 96px; --y: 0px; --angle: 90deg; }
+.screen-firework i:nth-child(4) { --x: 68px; --y: 68px; --angle: 135deg; }
+.screen-firework i:nth-child(5) { --x: 0px; --y: 96px; --angle: 180deg; }
+.screen-firework i:nth-child(6) { --x: -68px; --y: 68px; --angle: 225deg; }
+.screen-firework i:nth-child(7) { --x: -96px; --y: 0px; --angle: 270deg; }
+.screen-firework i:nth-child(8) { --x: -68px; --y: -68px; --angle: 315deg; }
+
+.celebration.show .screen-firework {
+  opacity: 1;
+}
+
+.celebration.show .screen-firework::before {
+  animation: firework-core 1550ms ease-out both;
+  animation-delay: var(--delay);
+}
+
+.celebration.show .screen-firework i {
+  animation: firework-ray 1550ms ease-out both;
+  animation-delay: var(--delay);
+}
+
+@keyframes firework {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.2);
+  }
+
+  18% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(1.5);
+  }
+}
+
+@keyframes firework-core {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.15);
+  }
+
+  12% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.9);
+  }
+}
+
+@keyframes firework-ray {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(var(--angle)) scaleY(0.22);
+  }
+
+  14% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) rotate(var(--angle)) scaleY(1);
+  }
+}
+
+@keyframes celebration-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.94);
+  }
+
+  12%,
+  82% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+}
+
+@keyframes unicorn-dance {
+  from {
+    transform: rotate(-7deg) translateY(2px);
+  }
+
+  to {
+    transform: rotate(7deg) translateY(-3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .celebration.show .celebration-card,
+  .celebration.show .celebration-unicorn,
+  .celebration.show .celebration-burst span,
+  .celebration.show .screen-firework,
+  .celebration.show .screen-firework::before,
+  .celebration.show .screen-firework i {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (max-width: 620px) {
+  .app {
+    padding: 24px 12px 36px;
+  }
+
+  .game-card {
+    padding: 18px 14px;
+  }
+
+  .bingo-board {
+    gap: 5px;
+  }
+
+  .tile {
+    min-height: 72px;
+    padding: 8px;
+  }
+
+  .tile span {
+    font-size: 0.72rem;
+  }
+
+  .level-strip {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .screen-firework {
+    width: 126px;
+    height: 126px;
+  }
+
+  .firework-one {
+    top: 18%;
+    left: 4%;
+  }
+
+  .firework-two {
+    top: 18%;
+    right: 3%;
+  }
+
+  .firework-three {
+    left: 6%;
+    bottom: 13%;
+  }
+
+  .firework-four {
+    right: 6%;
+    bottom: 13%;
+  }
+}
+
+    </style>
   </head>
   <body>
     <main class="app">
@@ -123,6 +977,860 @@
       </section>
     </main>
 
-    <script src="./script.js?v=7"></script>
+    <script>
+const actions = [
+  {
+    track: "AI Everyday",
+    title: "Draft an email",
+    position: [0, 0],
+    brief: "Turn rough notes into a clear email without losing the point.",
+    best: "Give the audience, goal, tone, must-include facts, and ask for a concise draft.",
+    feedback: "Email drafting is a fast win when the model gets the audience and the facts it must preserve."
+  },
+  {
+    track: "AI Everyday",
+    title: "Summarize a long doc",
+    position: [0, 1],
+    brief: "Use AI to get through a long document before a meeting.",
+    best: "Ask for a summary, key decisions, open questions, and exact sections worth rereading.",
+    feedback: "The model can compress the document, but important claims still need the original source."
+  },
+  {
+    track: "AI Everyday",
+    title: "Prep for a meeting",
+    position: [0, 2],
+    brief: "Walk into a meeting with sharper context and better questions.",
+    best: "Share the agenda and goal, then ask for likely questions, risks, and a short prep brief.",
+    feedback: "Meeting prep works best when AI has the purpose of the meeting, not just the title."
+  },
+  {
+    track: "AI Builder",
+    title: "Build an HTML page",
+    position: [0, 3],
+    brief: "Make a tiny browser page from an idea, then check that it actually works.",
+    best: "Ask for one self-contained HTML file, test it locally, then refine the layout and copy.",
+    feedback: "HTML is a great beginner shipping format because people can open it immediately."
+  },
+  {
+    track: "AI Everyday",
+    title: "Research a company",
+    position: [0, 4],
+    brief: "Get oriented on a company before a call or project.",
+    best: "Ask for a brief with sources, recent changes, customers, competitors, and questions to verify.",
+    feedback: "Research outputs should include source trails and verification questions, not just confident prose."
+  },
+  {
+    track: "AI Builder",
+    title: "Build a Skill",
+    position: [1, 0],
+    brief: "Package repeatable know-how so AI can perform a task the same way next time.",
+    best: "Define the task, inputs, rules, examples, and success checks before turning it into a skill.",
+    feedback: "A skill is stronger when it captures a repeatable workflow, not a one-off instruction blob."
+  },
+  {
+    track: "AI Everyday",
+    title: "Translate jargon",
+    position: [1, 1],
+    brief: "Turn dense internal language into plain English.",
+    best: "Ask for a plain-language rewrite for a specific audience and keep key terms accurate.",
+    feedback: "Plain-language translation is useful when the audience and non-negotiable terms are explicit."
+  },
+  {
+    track: "AI Builder",
+    title: "Create a project",
+    position: [1, 2],
+    brief: "Set up a Claude Project so AI has the right context, files, and instructions for repeat work.",
+    best: "Create a Claude Project with a clear purpose, project instructions, reference files, examples, and boundaries for what Claude should and should not do.",
+    tips: [
+      {
+        label: "Purpose",
+        text: "Name the project around the work it supports, such as customer research, weekly reporting, launch planning, or policy review."
+      },
+      {
+        label: "Instructions",
+        text: "Add project instructions that explain the audience, tone, recurring tasks, preferred formats, and decision rules."
+      },
+      {
+        label: "Knowledge",
+        text: "Upload or reference useful source docs, examples, templates, brand guidance, FAQs, or past outputs Claude should learn from."
+      },
+      {
+        label: "Boundaries",
+        text: "Tell Claude what not to do: avoid unsupported claims, flag uncertainty, protect sensitive data, and ask before making assumptions."
+      }
+    ],
+    copyPrompt: `I want to create a Claude Project for repeat work.
+
+Project purpose:
+[Describe the work this project should help with.]
+
+Audience:
+[Who the outputs are for.]
+
+Recurring tasks:
+[List the tasks Claude should help with repeatedly.]
+
+Source material:
+[List docs, examples, templates, policies, FAQs, or past outputs to add.]
+
+Please help me write:
+1. A clear project description.
+2. Project instructions for Claude.
+3. The files or examples I should add as project knowledge.
+4. Output formats I should standardize.
+5. Boundaries: what Claude should avoid, flag, or ask about.
+
+Make the project instructions practical enough that a nontechnical teammate could use them.`,
+    feedback: "A good Claude Project turns scattered context into a reusable AI workspace with clear instructions, source material, and boundaries."
+  },
+  {
+    track: "AI Everyday",
+    title: "Brainstorm 10 ideas",
+    position: [1, 3],
+    brief: "Generate options without getting stuck on the first obvious answer.",
+    best: "Ask for 10 varied ideas, grouped by effort, risk, and who they help.",
+    feedback: "Brainstorming is better when the model is asked for variety and tradeoffs."
+  },
+  {
+    track: "AI Builder",
+    title: "Schedule a task",
+    position: [1, 4],
+    brief: "Turn a reminder or recurring check into a scheduled AI task.",
+    best: "Define the trigger, frequency, source to check, and what a useful result should include.",
+    feedback: "Scheduled AI work needs a clear trigger and a clear output."
+  },
+  {
+    track: "AI Everyday",
+    title: "Write talking points",
+    position: [2, 0],
+    brief: "Prepare crisp points for a conversation, update, or presentation.",
+    best: "Give the audience, goal, facts, and ask for short points with likely follow-up questions.",
+    feedback: "Talking points work when they sound like something a person would actually say."
+  },
+  {
+    track: "AI Builder",
+    title: "Set up GitHub",
+    position: [2, 1],
+    brief: "Put a prototype somewhere it can be versioned and shared.",
+    best: "Create a repo, add the project files, write a README, and commit a working first version.",
+    feedback: "GitHub turns a local experiment into something teammates can inspect, improve, and publish.",
+    links: [
+      {
+        label: "Open GitHub",
+        url: "https://github.com/"
+      }
+    ]
+  },
+  {
+    track: "AI Builder",
+    title: "Build an App",
+    position: [2, 3],
+    brief: "Build a tiny useful app from scratch, even if you are just getting started.",
+    best: "Start with one small job, ask AI for a simple first version, run it locally, test it, then improve one thing at a time.",
+    tips: [
+      {
+        label: "Step 1",
+        text: "Pick one tiny workflow: calculator, checklist, formatter, tracker, meeting-note cleaner, or prompt helper."
+      },
+      {
+        label: "Step 2",
+        text: "Write the app contract: who it is for, what they enter, what it should output, and what it must not do."
+      },
+      {
+        label: "Step 3",
+        text: "Ask AI for a first version as a single HTML file with built-in CSS and JavaScript."
+      },
+      {
+        label: "Step 4",
+        text: "Open it locally, try sample inputs, list what feels confusing or broken, then ask AI for targeted fixes."
+      },
+      {
+        label: "Step 5",
+        text: "Before sharing, remove secrets, add short instructions, label it a prototype, and use an approved sharing path."
+      }
+    ],
+    copyPrompt: `I want to build a tiny beginner-friendly web app.
+
+App idea:
+[Describe the one small job this app should do.]
+
+Audience:
+[Who will use it?]
+
+Inputs:
+[What will the user type, paste, upload, or select?]
+
+Outputs:
+[What should the app show, calculate, format, or create?]
+
+Constraints:
+- Make the first version a single HTML file with CSS and JavaScript included.
+- Keep the UI simple and readable.
+- Do not use external services, API keys, build tools, or databases.
+- Include comments only where a beginner would need help understanding the code.
+
+Please give me:
+1. The complete HTML file.
+2. A short explanation of how to open it locally.
+3. Three sample tests I should try.
+4. A short list of safe next improvements.`,
+    feedback: "A good first app is small, local, and testable. Once that works, improve it in clear steps instead of trying to build the whole product at once."
+  },
+  {
+    track: "AI Everyday",
+    title: "Summarize Slack thread",
+    position: [2, 4],
+    brief: "Turn a messy discussion into decisions and follow-ups.",
+    best: "Ask for decisions, owners, deadlines, unresolved questions, and links back to key messages.",
+    feedback: "Thread summaries are valuable when they separate decisions from chatter."
+  },
+  {
+    track: "AI Builder",
+    title: "Install a plugin",
+    position: [3, 0],
+    brief: "Extend AI with a tool, connector, or capability.",
+    best: "Check what the plugin can access, install only what you need, and test it on a low-risk task.",
+    feedback: "Plugins are powerful because they add actions and data access, so scope matters."
+  },
+  {
+    track: "AI Everyday",
+    title: "Bullets -> memo",
+    position: [3, 1],
+    brief: "Turn bullet notes into a polished memo people can scan.",
+    best: "Provide the bullets, audience, desired structure, and ask AI to preserve facts while improving flow.",
+    feedback: "The trick is letting AI improve structure while you keep control of facts."
+  },
+  {
+    track: "AI Builder",
+    title: "Connect an MCP",
+    position: [3, 2],
+    brief: "Connect your LLM or AI platform to useful work tools through a controlled interface.",
+    best: "Start with one tool, such as Gmail, Calendar, Google Drive, or Slack; keep permissions narrow; test read-only behavior first.",
+    tips: [
+      {
+        label: "Examples",
+        text: "Connect Gmail for email summaries, Calendar for schedule prep, Google Drive for document lookup, or Slack for thread summaries."
+      },
+      {
+        label: "Start narrow",
+        text: "Begin with read-only access and one use case, such as 'summarize recent messages' or 'find docs for this meeting.'"
+      },
+      {
+        label: "Add actions later",
+        text: "Only add send, edit, create, or delete actions after the read-only workflow is useful and permission boundaries are clear."
+      },
+      {
+        label: "Check",
+        text: "Confirm which account is connected, what data the tool can access, and whether outputs need human review before any action."
+      }
+    ],
+    copyPrompt: `I want to connect an MCP/tool connector to my AI platform.
+
+Tool I want to connect:
+[Gmail, Google Calendar, Google Drive, Slack, or another work tool.]
+
+Use case:
+[Example: summarize recent email, prep for meetings, find relevant docs, summarize Slack threads.]
+
+Please help me design a safe first setup:
+1. What permissions should I start with?
+2. What should stay read-only at first?
+3. What exact test should I run to confirm it works?
+4. What risks should I watch for?
+5. What actions should require human confirmation?
+
+Assume I want the narrowest useful access, not broad access by default.`,
+    feedback: "MCP and connectors are most useful when they connect AI to real work tools with narrow permissions, clear tests, and human confirmation for risky actions."
+  },
+  {
+    track: "AI Everyday",
+    title: "Give writing feedback",
+    position: [3, 3],
+    brief: "Use AI as a reviewer before sending or publishing writing.",
+    best: "Ask for feedback against criteria: clarity, tone, missing context, risks, and specific edits.",
+    feedback: "Good feedback prompts use criteria, not just vibes."
+  },
+  {
+    track: "AI Builder",
+    title: "Create an infographic",
+    position: [3, 4],
+    brief: "Turn information into a visual explainer.",
+    best: "Give the audience, key message, data points, and ask for a simple layout before generating visuals.",
+    feedback: "Strong visuals start with hierarchy and message, not decoration."
+  },
+  {
+    track: "AI Builder",
+    title: "Set up Cowork profile",
+    position: [4, 0],
+    brief: "Teach the AI how you work so its help fits your role.",
+    best: "Answer questions about your role, recurring work, communication style, tools, priorities, and boundaries so Cowork can personalize help.",
+    tips: [
+      {
+        label: "Role",
+        text: "Clarify your job, team, stakeholders, and the kinds of outcomes you are responsible for."
+      },
+      {
+        label: "Work patterns",
+        text: "List recurring meetings, reports, reviews, decisions, and tasks where AI could save time."
+      },
+      {
+        label: "Preferences",
+        text: "Describe your preferred writing style, level of detail, formats, defaults, and how you like tradeoffs explained."
+      },
+      {
+        label: "Boundaries",
+        text: "State what Cowork should never assume, send, decide, access, or change without asking you first."
+      }
+    ],
+    copyPrompt: `Help me create a useful Cowork profile by interviewing me.
+
+Ask me concise questions in these sections:
+
+1. Role and context
+- What is my role?
+- Who do I support or work with most?
+- What outcomes am I responsible for?
+
+2. Recurring work
+- What meetings, reports, reviews, or planning rituals happen every week?
+- What tasks do I repeat that AI could help draft, summarize, organize, or check?
+- What information do I often need before meetings or decisions?
+
+3. Tools and sources
+- What tools do I use most, such as Gmail, Calendar, Drive, Slack, docs, spreadsheets, or project tools?
+- Which sources are reliable, and which should Cowork treat carefully?
+
+4. Communication style
+- How should Cowork write for me: concise, warm, direct, executive, casual, detailed?
+- What words, tones, or formats should it avoid?
+- What output formats do I prefer: bullets, tables, memos, agendas, drafts, checklists?
+
+5. Proactive help
+- What should Cowork remind me about, prepare for, or suggest without waiting for a perfect prompt?
+- What should it ask before doing?
+
+6. Boundaries
+- What should Cowork never send, publish, decide, access, or change without explicit approval?
+- What sensitive information should it avoid using unless I provide clear permission?
+
+After asking the questions, synthesize my answers into a clean Cowork profile with:
+- Role summary
+- Work patterns
+- Preferred output style
+- Important tools and sources
+- Proactive help opportunities
+- Boundaries and approval rules
+- Example instructions Cowork should remember`,
+    feedback: "A strong Cowork profile gives the AI useful defaults and clear boundaries, so it can help without needing the same context every time."
+  },
+  {
+    track: "AI Everyday",
+    title: "Draft a performance note",
+    position: [4, 1],
+    brief: "Write a careful performance note from concrete observations.",
+    best: "Provide specific facts, desired tone, and ask AI to avoid exaggeration or unsupported claims.",
+    feedback: "Sensitive workplace writing needs factual grounding and a human final pass."
+  },
+  {
+    track: "AI Builder",
+    title: "Build a slide deck",
+    position: [4, 2],
+    brief: "Turn an idea or outline into a clear set of slides.",
+    best: "Ask for a storyline, slide titles, evidence needed, and speaker notes before making visuals; you can also try Gamma for fast AI-assisted deck creation.",
+    tips: [
+      {
+        label: "Start",
+        text: "Write the audience, goal, key message, and the decision or action the deck should support."
+      },
+      {
+        label: "Outline",
+        text: "Ask AI for the storyline, slide titles, supporting evidence, and speaker notes before designing slides."
+      },
+      {
+        label: "Try Gamma",
+        text: "You can also try Gamma to turn an outline or prompt into a polished first draft deck."
+      },
+      {
+        label: "Check",
+        text: "Review the deck for accuracy, missing evidence, too much text, and whether the story is clear without explanation."
+      }
+    ],
+    links: [
+      {
+        label: "Open Gamma",
+        url: "https://gamma.app/"
+      }
+    ],
+    copyPrompt: `I want to build a slide deck.
+
+Audience:
+[Who is this deck for?]
+
+Goal:
+[What should the audience understand, decide, or do after seeing it?]
+
+Raw material:
+[Paste notes, bullets, data, or a rough outline.]
+
+Please create:
+1. A clear storyline.
+2. Slide-by-slide titles.
+3. Key points for each slide.
+4. Evidence or data each slide needs.
+5. Speaker notes.
+6. Suggestions for which parts could be turned into visuals.
+
+Keep it concise and tell me what facts I should verify before presenting. You can also suggest how to adapt this outline for Gamma.`,
+    feedback: "Decks work best when the story comes before the formatting. Tools like Gamma can speed up a first draft once the narrative is clear."
+  },
+  {
+    track: "AI Everyday",
+    title: "Clean up meeting notes",
+    position: [4, 3],
+    brief: "Convert rough notes into a useful after-meeting record.",
+    best: "Ask for decisions, action items, owners, dates, and anything that needs confirmation.",
+    feedback: "Meeting cleanup should make next steps unmistakable."
+  },
+  {
+    track: "AI Builder",
+    title: "Run a Day Review",
+    position: [4, 4],
+    brief: "Use AI to summarize the day and plan the next one, then turn it into a repeatable workflow.",
+    best: "Start with a day-review prompt, turn the pattern into a reusable skill, then schedule it to run at the end of the day.",
+    tips: [
+      {
+        label: "Start",
+        text: "Ask AI to summarize completed work, loose ends, blockers, and the top three priorities for tomorrow."
+      },
+      {
+        label: "Make it a skill",
+        text: "Once the review format feels useful, save the instructions as a repeatable day-review skill with the sections you always want."
+      },
+      {
+        label: "Schedule it",
+        text: "Create a scheduled task to run the day-review skill at the end of each workday or before your planning block."
+      },
+      {
+        label: "Check",
+        text: "Review the output before acting on it, especially priorities, blockers, and anything involving other people."
+      }
+    ],
+    copyPrompt: `I want to run an end-of-day review.
+
+Context:
+[Paste today's notes, completed work, meetings, messages, or rough thoughts.]
+
+Please produce:
+1. What I completed today.
+2. Loose ends I should not forget.
+3. Blockers or risks.
+4. Follow-ups I owe other people.
+5. The top three priorities for tomorrow.
+6. Anything I should turn into a recurring workflow or skill.
+
+After this format works, help me convert it into a reusable day-review skill and then into a scheduled end-of-day task.`,
+    feedback: "Day review is a strong example of progression: prompt first, skill second, scheduled task third."
+  }
+];
+
+const difficultyOrder = [
+  "Draft an email",
+  "Summarize a long doc",
+  "Prep for a meeting",
+  "Translate jargon",
+  "Brainstorm 10 ideas",
+  "Clean up meeting notes",
+  "Bullets -> memo",
+  "Write talking points",
+  "Give writing feedback",
+  "Summarize Slack thread",
+  "Set up Cowork profile",
+  "Install a plugin",
+  "Research a company",
+  "Draft a performance note",
+  "Create a project",
+  "Build a slide deck",
+  "Create an infographic",
+  "Connect an MCP",
+  "Build a Skill",
+  "Schedule a task",
+  "Run a Day Review",
+  "Build an HTML page",
+  "Set up GitHub",
+  "Build an App"
+];
+
+const progressionPositions = [
+  [0, 0], [0, 1], [0, 2], [0, 3], [0, 4],
+  [1, 0], [1, 1], [1, 2], [1, 3], [1, 4],
+  [2, 0], [2, 1], [2, 3], [2, 4],
+  [3, 0], [3, 1], [3, 2], [3, 3], [3, 4],
+  [4, 0], [4, 1], [4, 2], [4, 3], [4, 4]
+];
+
+actions.sort((a, b) => difficultyOrder.indexOf(a.title) - difficultyOrder.indexOf(b.title));
+actions.forEach((action, index) => {
+  action.position = progressionPositions[index];
+});
+
+const bingoLines = [
+  [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4]],
+  [[1, 0], [1, 1], [1, 2], [1, 3], [1, 4]],
+  [[2, 0], [2, 1], [2, 2], [2, 3], [2, 4]],
+  [[3, 0], [3, 1], [3, 2], [3, 3], [3, 4]],
+  [[4, 0], [4, 1], [4, 2], [4, 3], [4, 4]],
+  [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0]],
+  [[0, 1], [1, 1], [2, 1], [3, 1], [4, 1]],
+  [[0, 2], [1, 2], [2, 2], [3, 2], [4, 2]],
+  [[0, 3], [1, 3], [2, 3], [3, 3], [4, 3]],
+  [[0, 4], [1, 4], [2, 4], [3, 4], [4, 4]],
+  [[0, 0], [1, 1], [2, 2], [3, 3], [4, 4]],
+  [[0, 4], [1, 3], [2, 2], [3, 1], [4, 0]]
+];
+
+const state = {
+  current: 0,
+  completed: new Set(),
+  locked: false
+};
+
+let celebrationTimer = null;
+
+const els = {
+  board: document.querySelector("#bingoBoard"),
+  modal: document.querySelector("#detailModal"),
+  close: document.querySelector("#closeDetail"),
+  completed: document.querySelector("#completedValue"),
+  bingo: document.querySelector("#bingoValue"),
+  progress: document.querySelector("#progressFill"),
+  track: document.querySelector("#missionTrack"),
+  round: document.querySelector("#roundValue"),
+  total: document.querySelector("#roundTotal"),
+  title: document.querySelector("#missionTitle"),
+  brief: document.querySelector("#missionBrief"),
+  choices: document.querySelector("#choiceGrid"),
+  resourceLinks: document.querySelector("#resourceLinks"),
+  promptText: document.querySelector("#promptText"),
+  copyPrompt: document.querySelector("#copyPrompt"),
+  submit: document.querySelector("#submitAnswer"),
+  next: document.querySelector("#nextRound"),
+  feedback: document.querySelector("#feedbackBox"),
+  reset: document.querySelector("#resetGame"),
+  everydayDone: document.querySelector("#everydayDone"),
+  builderDone: document.querySelector("#builderDone"),
+  everydayFill: document.querySelector("#everydayFill"),
+  builderFill: document.querySelector("#builderFill"),
+  celebration: document.querySelector("#celebration")
+};
+
+function render() {
+  renderBoard();
+  renderDetail();
+  renderStats();
+}
+
+function renderBoard() {
+  els.board.innerHTML = "";
+
+  for (let row = 0; row < 5; row += 1) {
+    for (let col = 0; col < 5; col += 1) {
+      if (row === 2 && col === 2) {
+        els.board.append(createFreeTile());
+        continue;
+      }
+
+      const index = actions.findIndex((action) => (
+        action.position[0] === row && action.position[1] === col
+      ));
+      els.board.append(createActionTile(actions[index], index));
+    }
+  }
+}
+
+function createFreeTile() {
+  const tile = document.createElement("div");
+  tile.className = "tile free";
+  tile.innerHTML = `
+    <span>It's time to build</span>
+    <small>free square</small>
+  `;
+  return tile;
+}
+
+function createActionTile(action, index) {
+  const tile = document.createElement("button");
+  const completed = state.completed.has(index);
+  const active = state.current === index;
+  tile.className = [
+    "tile",
+    action.track === "AI Builder" ? "builder" : "everyday",
+    completed ? "complete" : "",
+    active ? "active" : ""
+  ].filter(Boolean).join(" ");
+  tile.type = "button";
+  tile.dataset.index = String(index);
+  tile.innerHTML = `
+    <span>${action.title}</span>
+    ${action.track === "AI Builder" ? "<small>⚡</small>" : ""}
+    ${active ? '<i class="tile-pac" aria-hidden="true"></i>' : ""}
+    ${completed ? '<b aria-label="complete">✓</b>' : ""}
+  `;
+  tile.addEventListener("click", () => selectTile(index));
+  return tile;
+}
+
+function selectTile(index) {
+  state.current = index;
+  state.locked = state.completed.has(index);
+  render();
+  els.modal.hidden = false;
+}
+
+function renderDetail() {
+  const action = actions[state.current];
+  const collected = state.completed.has(state.current);
+
+  els.track.textContent = action.track;
+  els.round.textContent = String(state.current + 1);
+  els.total.textContent = String(actions.length);
+  els.title.textContent = action.title;
+  els.brief.textContent = action.brief;
+  els.promptText.textContent = getCopyPrompt(action);
+  els.copyPrompt.textContent = "copy";
+  els.submit.disabled = collected;
+  els.submit.hidden = collected;
+  els.next.hidden = false;
+  els.next.textContent = collected ? "next tile" : "skip";
+  els.feedback.hidden = !collected;
+  els.feedback.innerHTML = collected
+    ? `<strong>Collected</strong>${action.feedback}`
+    : "";
+  els.choices.innerHTML = "";
+  renderResourceLinks(action);
+
+  getTips(action).forEach((tip) => {
+    const item = document.createElement("div");
+    item.className = "tip-card";
+    item.innerHTML = `
+      <strong>${tip.label}</strong>
+      <span>${tip.text}</span>
+    `;
+    els.choices.append(item);
+  });
+}
+
+function renderResourceLinks(action) {
+  els.resourceLinks.innerHTML = "";
+  els.resourceLinks.hidden = !action.links?.length;
+
+  if (!action.links?.length) return;
+
+  action.links.forEach((link) => {
+    const anchor = document.createElement("a");
+    anchor.href = link.url;
+    anchor.target = "_blank";
+    anchor.rel = "noreferrer";
+    anchor.textContent = link.label;
+    els.resourceLinks.append(anchor);
+  });
+}
+
+function collectTile() {
+  if (state.locked) return;
+
+  const action = actions[state.current];
+  const previousBingos = countBingos();
+
+  state.completed.add(state.current);
+  state.locked = true;
+  els.submit.hidden = true;
+  els.next.hidden = false;
+  els.next.textContent = "next tile";
+  els.feedback.hidden = false;
+  els.feedback.innerHTML = `<strong>Collected</strong>${action.feedback}`;
+
+  renderBoard();
+  renderStats();
+
+  const currentBingos = countBingos();
+  if (currentBingos > previousBingos) {
+    showCelebration(currentBingos - previousBingos, currentBingos);
+  }
+}
+
+function nextTile() {
+  const start = state.current + 1;
+  const indexes = [...Array(actions.length).keys()];
+  const next = [...indexes.slice(start), ...indexes.slice(0, start)]
+    .find((index) => !state.completed.has(index));
+
+  state.current = typeof next === "number" ? next : state.current;
+  state.locked = state.completed.has(state.current);
+  render();
+  els.modal.hidden = false;
+}
+
+function renderStats() {
+  const done = state.completed.size;
+  const bingos = countBingos();
+  const everydayActions = actions.filter((action) => action.track === "AI Everyday");
+  const builderActions = actions.filter((action) => action.track === "AI Builder");
+  const everyday = actions.filter((action, index) => (
+    action.track === "AI Everyday" && state.completed.has(index)
+  )).length;
+  const builder = actions.filter((action, index) => (
+    action.track === "AI Builder" && state.completed.has(index)
+  )).length;
+
+  els.completed.textContent = String(done);
+  els.bingo.textContent = String(bingos);
+  els.progress.style.width = `${(done / actions.length) * 100}%`;
+  els.everydayDone.textContent = String(everyday);
+  els.builderDone.textContent = String(builder);
+  els.everydayFill.style.width = `${(everyday / everydayActions.length) * 100}%`;
+  els.builderFill.style.width = `${(builder / builderActions.length) * 100}%`;
+}
+
+function countBingos() {
+  return bingoLines.filter((line) => (
+    line.every(([row, col]) => isTileDone(row, col))
+  )).length;
+}
+
+function isTileDone(row, col) {
+  if (row === 2 && col === 2) return true;
+
+  return actions.some((action, index) => (
+    action.position[0] === row &&
+    action.position[1] === col &&
+    state.completed.has(index)
+  ));
+}
+
+function resetGame() {
+  state.current = 0;
+  state.completed.clear();
+  state.locked = false;
+  hideCelebration();
+  render();
+}
+
+function showCelebration(newLines, totalBingos) {
+  if (!els.celebration) return;
+
+  window.clearTimeout(celebrationTimer);
+  const lineCopy = newLines === 1
+    ? "Bingo unlocked."
+    : `${newLines} new lines unlocked.`;
+  const totalCopy = totalBingos > 1
+    ? ` ${totalBingos} total bingos.`
+    : "";
+
+  els.celebration.setAttribute("aria-label", `${lineCopy}${totalCopy}`);
+  els.celebration.hidden = false;
+  els.celebration.classList.remove("show");
+  void els.celebration.offsetWidth;
+  els.celebration.classList.add("show");
+
+  celebrationTimer = window.setTimeout(hideCelebration, 2200);
+}
+
+function hideCelebration() {
+  if (!els.celebration) return;
+
+  window.clearTimeout(celebrationTimer);
+  els.celebration.hidden = true;
+  els.celebration.classList.remove("show");
+}
+
+function getTips(action) {
+  if (action.tips) return action.tips;
+
+  return [
+    {
+      label: "Start",
+      text: action.brief
+    },
+    {
+      label: "Prompt",
+      text: action.best
+    },
+    {
+      label: "Check",
+      text: getCheckTip(action)
+    }
+  ];
+}
+
+function getCopyPrompt(action) {
+  if (action.copyPrompt) return action.copyPrompt;
+
+  return `I want to: ${action.title}.
+
+Context:
+[Paste the relevant notes, document excerpt, goal, or constraints here.]
+
+Please help me with this task:
+${action.best}
+
+Format the output so it is easy to review and use.
+Before the final answer, flag any assumptions, missing context, or details I should verify.`;
+}
+
+function getCheckTip(action) {
+  if (action.title.includes("HTML") || action.title.includes("App")) {
+    return "Test with sample data, remove secrets, add a short README or instructions, then share through an approved path.";
+  }
+
+  if (action.title.includes("plugin") || action.title.includes("MCP") || action.title.includes("Skill")) {
+    return "Keep permissions narrow, test on low-risk data, and write down what the tool is allowed to do.";
+  }
+
+  if (action.title.includes("GitHub")) {
+    return "Confirm the repo is private or approved for sharing, then commit a clean working version with setup notes.";
+  }
+
+  if (action.title.includes("profile")) {
+    return "Include useful preferences, but leave out secrets, private personal details, and anything the AI does not need.";
+  }
+
+  if (action.title.includes("performance")) {
+    return "Verify every claim is grounded in specific observations before using the draft.";
+  }
+
+  return "Review for accuracy, tone, missing context, and anything that needs a human decision before sharing.";
+}
+
+async function copyPrompt() {
+  const text = els.promptText.textContent;
+
+  try {
+    await navigator.clipboard.writeText(text);
+    els.copyPrompt.textContent = "copied";
+  } catch {
+    els.copyPrompt.textContent = "select text";
+  }
+
+  window.setTimeout(() => {
+    els.copyPrompt.textContent = "copy";
+  }, 1600);
+}
+
+function closeDetail() {
+  els.modal.hidden = true;
+}
+
+els.submit.addEventListener("click", collectTile);
+els.next.addEventListener("click", nextTile);
+els.reset.addEventListener("click", resetGame);
+els.copyPrompt.addEventListener("click", copyPrompt);
+els.close.addEventListener("click", closeDetail);
+els.modal.addEventListener("click", (event) => {
+  if (event.target === els.modal) closeDetail();
+});
+
+render();
+
+    </script>
   </body>
 </html>
