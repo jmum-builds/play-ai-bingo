@@ -470,12 +470,33 @@ h1 {
   color: var(--accent);
 }
 
+.boss-modal {
+  z-index: 42;
+}
+
+.boss-panel {
+  border-color: rgba(255, 210, 63, 0.5);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.48);
+}
+
+.boss-panel h2 {
+  color: #fff1b6;
+}
+
+.boss-steps {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.boss-steps .tip-card {
+  background: #201f18;
+}
+
 .level-strip {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
   width: min(720px, 100%);
-  margin: 18px auto 0;
+  margin: 48px auto 0;
   padding-top: 2px;
 }
 
@@ -833,6 +854,10 @@ h1 {
     gap: 14px;
   }
 
+  .boss-steps {
+    grid-template-columns: 1fr;
+  }
+
   .screen-firework {
     width: 126px;
     height: 126px;
@@ -950,6 +975,29 @@ h1 {
             <span class="celebration-unicorn" aria-hidden="true">🦄</span>
             <strong>Bingo!</strong>
           </div>
+        </div>
+
+        <div class="modal boss-modal" id="bossModal" hidden>
+          <aside class="detail-panel boss-panel" aria-live="polite">
+            <button class="close-button" id="closeBoss" type="button" aria-label="Close">×</button>
+            <div class="detail-kicker">
+              <span>Boss Level</span>
+              <span id="bossLevelValue">Bingo 1</span>
+            </div>
+            <h2 id="bossTitle">Build a real AI workflow</h2>
+            <p id="bossBrief">Turn the row you completed into one repeatable workflow someone at work could actually use.</p>
+            <div class="choice-grid boss-steps" id="bossSteps"></div>
+            <div class="prompt-box">
+              <div class="prompt-top">
+                <strong>Boss prompt</strong>
+                <button class="copy-button" id="copyBossPrompt" type="button">copy</button>
+              </div>
+              <pre id="bossPromptText"></pre>
+            </div>
+            <div class="actions">
+              <button class="primary" id="closeBossAction" type="button">keep playing</button>
+            </div>
+          </aside>
         </div>
 
         <footer class="level-strip" aria-label="Level progress">
@@ -1488,6 +1536,116 @@ const bingoLines = [
   [[0, 4], [1, 3], [2, 2], [3, 1], [4, 0]]
 ];
 
+const storageKey = "ai-bingo-progress-v1";
+
+const bossChallenges = [
+  {
+    title: "Build a real AI workflow",
+    brief: "Turn the row you completed into one repeatable workflow someone at work could actually use.",
+    steps: [
+      {
+        label: "Pick",
+        text: "Choose one recurring task that wastes time, creates confusion, or needs a repeatable format."
+      },
+      {
+        label: "Chain",
+        text: "Combine three completed tiles into a simple flow, such as research -> draft -> review."
+      },
+      {
+        label: "Share",
+        text: "Write the workflow so another teammate could run it without extra explanation."
+      }
+    ],
+    prompt: `I just completed an AI Bingo row and want to turn it into a real workflow.
+
+Completed actions:
+[List the tiles I completed.]
+
+Work task I want to improve:
+[Describe a recurring task from my role or team.]
+
+Please help me create:
+1. A simple workflow with 3-5 steps.
+2. The prompt or AI action for each step.
+3. What inputs someone needs before starting.
+4. What the final output should look like.
+5. What a human should review before using or sharing it.
+
+Keep it practical for a nontechnical teammate.`
+  },
+  {
+    title: "Create a prompt pack",
+    brief: "Package the best prompts from your completed tiles into a reusable mini toolkit.",
+    steps: [
+      {
+        label: "Collect",
+        text: "Pick three prompts that would be useful more than once."
+      },
+      {
+        label: "Standardize",
+        text: "Add placeholders for audience, context, source material, format, and review checks."
+      },
+      {
+        label: "Test",
+        text: "Run each prompt on a realistic example and tighten anything vague."
+      }
+    ],
+    prompt: `I want to create a reusable AI prompt pack.
+
+Use case:
+[Describe the role, team, or workflow this prompt pack supports.]
+
+Prompts I want to include:
+[Paste rough prompts or list the tasks.]
+
+Please turn these into a small prompt pack with:
+1. A clear name for each prompt.
+2. When to use it.
+3. Copy/paste prompt text with placeholders.
+4. Example inputs.
+5. A checklist for reviewing the output.
+
+Make it friendly for nontechnical coworkers.`
+  },
+  {
+    title: "Ship a tiny prototype",
+    brief: "Use what you learned to build or outline a small tool, page, or automation.",
+    steps: [
+      {
+        label: "Scope",
+        text: "Choose one tiny job: summarize, format, track, calculate, draft, or remind."
+      },
+      {
+        label: "Build",
+        text: "Ask AI for a first version that works locally or can be reviewed as a draft workflow."
+      },
+      {
+        label: "Improve",
+        text: "Test it with sample inputs, then ask for one focused improvement at a time."
+      }
+    ],
+    prompt: `I want to ship a tiny AI-assisted prototype.
+
+Problem:
+[What annoying or repetitive task should this help with?]
+
+Audience:
+[Who would use it?]
+
+Tiny first version:
+[Describe the smallest useful version.]
+
+Please help me create:
+1. A simple prototype plan.
+2. The first prompt or app spec.
+3. Sample inputs to test it.
+4. Success criteria.
+5. A safe way to share it as a prototype.
+
+Keep the first version small enough to finish today.`
+  }
+];
+
 const state = {
   current: 0,
   completed: new Set(),
@@ -1495,6 +1653,7 @@ const state = {
 };
 
 let celebrationTimer = null;
+let bossTimer = null;
 
 const els = {
   board: document.querySelector("#bingoBoard"),
@@ -1520,7 +1679,16 @@ const els = {
   builderDone: document.querySelector("#builderDone"),
   everydayFill: document.querySelector("#everydayFill"),
   builderFill: document.querySelector("#builderFill"),
-  celebration: document.querySelector("#celebration")
+  celebration: document.querySelector("#celebration"),
+  bossModal: document.querySelector("#bossModal"),
+  closeBoss: document.querySelector("#closeBoss"),
+  closeBossAction: document.querySelector("#closeBossAction"),
+  bossLevel: document.querySelector("#bossLevelValue"),
+  bossTitle: document.querySelector("#bossTitle"),
+  bossBrief: document.querySelector("#bossBrief"),
+  bossSteps: document.querySelector("#bossSteps"),
+  bossPromptText: document.querySelector("#bossPromptText"),
+  copyBossPrompt: document.querySelector("#copyBossPrompt")
 };
 
 function render() {
@@ -1582,6 +1750,7 @@ function createActionTile(action, index) {
 function selectTile(index) {
   state.current = index;
   state.locked = state.completed.has(index);
+  saveProgress();
   render();
   els.modal.hidden = false;
 }
@@ -1643,6 +1812,7 @@ function collectTile() {
 
   state.completed.add(state.current);
   state.locked = true;
+  saveProgress();
   els.submit.hidden = true;
   els.next.hidden = false;
   els.next.textContent = "next tile";
@@ -1655,6 +1825,7 @@ function collectTile() {
   const currentBingos = countBingos();
   if (currentBingos > previousBingos) {
     showCelebration(currentBingos - previousBingos, currentBingos);
+    scheduleBossLevel(currentBingos);
   }
 }
 
@@ -1666,6 +1837,7 @@ function nextTile() {
 
   state.current = typeof next === "number" ? next : state.current;
   state.locked = state.completed.has(state.current);
+  saveProgress();
   render();
   els.modal.hidden = false;
 }
@@ -1711,8 +1883,53 @@ function resetGame() {
   state.current = 0;
   state.completed.clear();
   state.locked = false;
+  clearProgress();
   hideCelebration();
+  hideBossLevel();
   render();
+}
+
+function loadProgress() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(storageKey));
+    if (!saved) return;
+
+    state.completed.clear();
+    if (Array.isArray(saved.completed)) {
+      saved.completed.forEach((index) => {
+        if (Number.isInteger(index) && index >= 0 && index < actions.length) {
+          state.completed.add(index);
+        }
+      });
+    }
+
+    if (Number.isInteger(saved.current) && saved.current >= 0 && saved.current < actions.length) {
+      state.current = saved.current;
+    }
+
+    state.locked = state.completed.has(state.current);
+  } catch {
+    clearProgress();
+  }
+}
+
+function saveProgress() {
+  try {
+    localStorage.setItem(storageKey, JSON.stringify({
+      current: state.current,
+      completed: [...state.completed]
+    }));
+  } catch {
+    // Progress saving is a convenience; the game still works without localStorage.
+  }
+}
+
+function clearProgress() {
+  try {
+    localStorage.removeItem(storageKey);
+  } catch {
+    // Ignore storage errors.
+  }
 }
 
 function showCelebration(newLines, totalBingos) {
@@ -1735,12 +1952,50 @@ function showCelebration(newLines, totalBingos) {
   celebrationTimer = window.setTimeout(hideCelebration, 2200);
 }
 
+function scheduleBossLevel(totalBingos) {
+  window.clearTimeout(bossTimer);
+  bossTimer = window.setTimeout(() => {
+    showBossLevel(totalBingos);
+  }, 2300);
+}
+
 function hideCelebration() {
   if (!els.celebration) return;
 
   window.clearTimeout(celebrationTimer);
   els.celebration.hidden = true;
   els.celebration.classList.remove("show");
+}
+
+function showBossLevel(totalBingos) {
+  if (!els.bossModal) return;
+
+  const challenge = bossChallenges[(totalBingos - 1) % bossChallenges.length];
+  els.bossLevel.textContent = `Bingo ${totalBingos}`;
+  els.bossTitle.textContent = challenge.title;
+  els.bossBrief.textContent = challenge.brief;
+  els.bossPromptText.textContent = challenge.prompt;
+  els.copyBossPrompt.textContent = "copy";
+  els.bossSteps.innerHTML = "";
+
+  challenge.steps.forEach((step) => {
+    const item = document.createElement("div");
+    item.className = "tip-card";
+    item.innerHTML = `
+      <strong>${step.label}</strong>
+      <span>${step.text}</span>
+    `;
+    els.bossSteps.append(item);
+  });
+
+  els.bossModal.hidden = false;
+}
+
+function hideBossLevel() {
+  window.clearTimeout(bossTimer);
+  if (!els.bossModal) return;
+
+  els.bossModal.hidden = true;
 }
 
 function getTips(action) {
@@ -1802,17 +2057,23 @@ function getCheckTip(action) {
 }
 
 async function copyPrompt() {
-  const text = els.promptText.textContent;
+  await copyText(els.promptText.textContent, els.copyPrompt);
+}
 
+async function copyBossPrompt() {
+  await copyText(els.bossPromptText.textContent, els.copyBossPrompt);
+}
+
+async function copyText(text, button) {
   try {
     await navigator.clipboard.writeText(text);
-    els.copyPrompt.textContent = "copied";
+    button.textContent = "copied";
   } catch {
-    els.copyPrompt.textContent = "select text";
+    button.textContent = "select text";
   }
 
   window.setTimeout(() => {
-    els.copyPrompt.textContent = "copy";
+    button.textContent = "copy";
   }, 1600);
 }
 
@@ -1824,11 +2085,18 @@ els.submit.addEventListener("click", collectTile);
 els.next.addEventListener("click", nextTile);
 els.reset.addEventListener("click", resetGame);
 els.copyPrompt.addEventListener("click", copyPrompt);
+els.copyBossPrompt.addEventListener("click", copyBossPrompt);
 els.close.addEventListener("click", closeDetail);
+els.closeBoss.addEventListener("click", hideBossLevel);
+els.closeBossAction.addEventListener("click", hideBossLevel);
 els.modal.addEventListener("click", (event) => {
   if (event.target === els.modal) closeDetail();
 });
+els.bossModal.addEventListener("click", (event) => {
+  if (event.target === els.bossModal) hideBossLevel();
+});
 
+loadProgress();
 render();
 
     </script>
